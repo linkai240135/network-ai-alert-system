@@ -12,9 +12,10 @@
 
       <div class="brand-panel">
         <div class="brand-block" :class="{ 'brand-block-collapsed': isCollapsed }">
-          <div class="brand-logo">NA</div>
+          <div class="brand-logo">AI</div>
           <div v-if="!isCollapsed" class="brand-copy">
-            <h1>网络异常检测平台</h1>
+            <h1 style="font-size:15px;letter-spacing:0.06em;color:#00d4ff;text-shadow:0 0 12px rgba(0,212,255,0.6);margin:0">网络异常检测平台</h1>
+            <p style="font-size:11px;color:rgba(0,212,255,0.45);letter-spacing:0.12em;text-transform:uppercase;margin:6px 0 0">Network AI Alert System</p>
           </div>
         </div>
       </div>
@@ -45,15 +46,12 @@
         </div>
 
         <div class="topbar-tags">
+          <span class="status-chip accent-chip">
+            <span style="width:6px;height:6px;border-radius:50%;background:#00e676;box-shadow:0 0 6px rgba(0,230,118,0.8);display:inline-block"></span>
+            系统在线
+          </span>
           <span class="status-chip user-chip">管理员</span>
-          <el-switch
-            v-model="isDark"
-            inline-prompt
-            active-text="暗"
-            inactive-text="亮"
-            @change="handleThemeChange"
-          />
-          <el-button size="small" type="danger" plain @click="handleLogout">退出登录</el-button>
+          <el-button size="small" type="danger" plain @click="handleLogout">退出</el-button>
         </div>
       </header>
 
@@ -180,6 +178,9 @@ const handleThemeChange = (value) => {
 }
 
 onMounted(() => {
+  // 强制暗色主题
+  themeStore.apply('dark')
+
   const cachedWidth = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY) || '')
   const cachedCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
 

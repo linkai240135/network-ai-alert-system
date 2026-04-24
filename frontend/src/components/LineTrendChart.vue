@@ -23,19 +23,24 @@ const renderChart = () => {
     animationDuration: 900,
     animationEasing: 'cubicOut',
     animationDurationUpdate: 500,
-    tooltip: { trigger: 'axis' },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(4, 18, 48, 0.92)',
+      borderColor: 'rgba(0, 212, 255, 0.3)',
+      textStyle: { color: '#a8c8e8' },
+    },
     grid: { left: 44, right: 18, top: 24, bottom: 32 },
     xAxis: {
       type: 'category',
       data: props.labels,
-      axisLine: { lineStyle: { color: 'rgba(118, 145, 182, 0.28)' } },
+      axisLine: { lineStyle: { color: 'rgba(0, 212, 255, 0.15)' } },
       axisTick: { show: false },
-      axisLabel: { color: '#6e83a2' },
+      axisLabel: { color: 'rgba(0, 212, 255, 0.45)', fontSize: 11 },
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: 'rgba(118, 145, 182, 0.14)' } },
-      axisLabel: { color: '#6e83a2' },
+      splitLine: { lineStyle: { color: 'rgba(0, 212, 255, 0.08)', type: 'dashed' } },
+      axisLabel: { color: 'rgba(0, 212, 255, 0.45)', fontSize: 11 },
     },
     series: [
       {
@@ -43,11 +48,11 @@ const renderChart = () => {
         type: 'line',
         smooth: true,
         showSymbol: false,
-        lineStyle: { width: 3, color: '#1976ff' },
+        lineStyle: { width: 2, color: '#00d4ff', shadowColor: 'rgba(0, 212, 255, 0.5)', shadowBlur: 8 },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(25, 118, 255, 0.26)' },
-            { offset: 1, color: 'rgba(25, 118, 255, 0.02)' },
+            { offset: 0, color: 'rgba(0, 212, 255, 0.2)' },
+            { offset: 1, color: 'rgba(0, 212, 255, 0.01)' },
           ]),
         },
         data: props.values,
