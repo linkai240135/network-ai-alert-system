@@ -74,172 +74,176 @@
         </el-table>
       </PanelCard>
 
-      <PanelCard title="研判工作台" subtitle="支持状态流转、报告导出、同源链路分析和误报反馈。">
+      <PanelCard title="研判工作台" subtitle="支持状态流转、报告导出、同源链路分析和误报反馈。" class="incident-workbench-card">
         <Transition name="focus-card-swap" mode="out-in">
           <el-empty v-if="!activeIncident" key="empty" description="请选择事件" />
-          <div v-else :key="`${activeIncident.id}-${activeIncident.status}`" class="page-stack">
-            <div class="service-card service-card-standalone operation-focus-card">
-              <div class="service-card-top">
-                <div>
-                  <strong>{{ activeIncident.attack_type }}</strong>
-                  <p>{{ activeIncident.asset?.asset_name || '--' }}</p>
+          <div v-else :key="`${activeIncident.id}-${activeIncident.status}`" class="incident-workbench-body">
+            <div class="incident-workbench-static">
+              <div class="service-card service-card-standalone operation-focus-card">
+                <div class="service-card-top">
+                  <div>
+                    <strong>{{ activeIncident.attack_type }}</strong>
+                    <p>{{ activeIncident.asset?.asset_name || '--' }}</p>
+                  </div>
+                  <SeverityTag :level="activeIncident.severity" />
                 </div>
-                <SeverityTag :level="activeIncident.severity" />
-              </div>
-              <div class="service-card-metrics">
-                <span>{{ activeIncident.source_ip }} -> {{ activeIncident.destination_ip }}</span>
-                <span>{{ activeIncident.status }}</span>
-              </div>
-              <div class="service-card-desc">
-                {{ activeIncident.attack_stage }} · 聚合 {{ activeIncident.event_count }} 条同类事件
-              </div>
-            </div>
-
-            <div class="status-flow-card">
-              <div class="status-flow-track">
-                <div
-                  v-for="step in incidentStatusFlow"
-                  :key="step.key"
-                  class="status-flow-step"
-                  :class="{ 'is-active': step.active, 'is-current': step.current }"
-                >
-                  <span class="status-flow-dot"></span>
-                  <strong>{{ step.label }}</strong>
-                  <p>{{ step.desc }}</p>
+                <div class="service-card-metrics">
+                  <span>{{ activeIncident.source_ip }} -> {{ activeIncident.destination_ip }}</span>
+                  <span>{{ activeIncident.status }}</span>
+                </div>
+                <div class="service-card-desc">
+                  {{ activeIncident.attack_stage }} · 聚合 {{ activeIncident.event_count }} 条同类事件
                 </div>
               </div>
-            </div>
 
-            <div class="action-row">
-              <el-button type="primary" @click="changeStatus('研判中')">标记研判中</el-button>
-              <el-button type="warning" @click="changeStatus('待处置')">升级待处置</el-button>
-              <el-button type="success" @click="changeStatus('已处置')">标记已处置</el-button>
-              <el-button type="primary" plain :loading="aiLoading" @click="handleAiAnalyzeIncident">DeepSeek 研判</el-button>
-              <el-button type="success" plain :loading="aiReportLoading" @click="handleAiReport">AI 报告</el-button>
-              <el-button @click="exportReport">导出事件报告</el-button>
-            </div>
-
-            <div class="filter-row">
-              <el-switch v-model="useReasonerMode" inline-prompt active-text="深度推理" inactive-text="快速研判" />
-              <el-tag type="info">当前模型：{{ currentAiModelLabel }}</el-tag>
-            </div>
-
-            <el-input v-model="note" type="textarea" :rows="3" placeholder="输入记录" />
-            <div class="action-row">
-              <el-button @click="appendNote">追加研判记录</el-button>
-            </div>
-
-            <div class="two-column">
-              <div class="panel-mini">
-                <div class="timeline-panel-head">
-                  <h4>同源攻击链路分析</h4>
-                  <el-button size="small" @click="loadSourceChain">刷新链路</el-button>
-                </div>
-                <TransitionGroup
-                  v-if="sourceChain.timeline?.length"
-                  name="timeline-stagger"
-                  tag="div"
-                  class="animated-timeline"
-                >
+              <div class="status-flow-card">
+                <div class="status-flow-track">
                   <div
-                    v-for="item in sourceChain.timeline"
-                    :key="`${item.incident_no}-${item.time}`"
-                    class="timeline-node"
+                    v-for="step in incidentStatusFlow"
+                    :key="step.key"
+                    class="status-flow-step"
+                    :class="{ 'is-active': step.active, 'is-current': step.current }"
                   >
-                    <div class="timeline-node-head">
-                      <strong>{{ item.attack_type }}</strong>
-                      <span>{{ item.time }}</span>
-                    </div>
-                    <p>{{ item.attack_stage }} · {{ item.target }}</p>
+                    <span class="status-flow-dot"></span>
+                    <strong>{{ step.label }}</strong>
+                    <p>{{ step.desc }}</p>
                   </div>
-                </TransitionGroup>
-                <el-empty v-else description="暂无链路" />
+                </div>
               </div>
 
-              <div class="panel-mini">
-                <h4>误报反馈反哺训练</h4>
-                <el-select v-model="feedback.feedback_type" class="full-width" placeholder="反馈类型">
-                  <el-option label="误报" value="误报" />
-                  <el-option label="漏报修正" value="漏报修正" />
-                  <el-option label="标签修正" value="标签修正" />
-                </el-select>
-                <el-input v-model="feedback.expected_label" class="top-gap" placeholder="期望标签" />
-                <el-input v-model="feedback.comment" class="top-gap" type="textarea" :rows="3" placeholder="输入反馈" />
-                <div class="action-row">
-                  <el-button type="danger" plain @click="submitFeedback">提交反馈</el-button>
-                </div>
+              <div class="action-row">
+                <el-button type="primary" @click="changeStatus('研判中')">标记研判中</el-button>
+                <el-button type="warning" @click="changeStatus('待处置')">升级待处置</el-button>
+                <el-button type="success" @click="changeStatus('已处置')">标记已处置</el-button>
+                <el-button type="primary" plain :loading="aiLoading" @click="handleAiAnalyzeIncident">DeepSeek 研判</el-button>
+                <el-button type="success" plain :loading="aiReportLoading" @click="handleAiReport">AI 报告</el-button>
+                <el-button @click="exportReport">导出事件报告</el-button>
+              </div>
+
+              <div class="filter-row">
+                <el-switch v-model="useReasonerMode" inline-prompt active-text="深度推理" inactive-text="快速研判" />
+                <el-tag type="info">当前模型：{{ currentAiModelLabel }}</el-tag>
+              </div>
+
+              <el-input v-model="note" type="textarea" :rows="3" placeholder="输入记录" />
+              <div class="action-row">
+                <el-button @click="appendNote">追加研判记录</el-button>
               </div>
             </div>
 
-            <div class="recommendation-list">
-              <div v-for="(item, index) in activeIncident.recommendations || []" :key="`${index}-${item}`" class="recommendation-item">
-                <span>{{ index + 1 }}</span>
-                <p>{{ item }}</p>
+            <div class="incident-workbench-scroll">
+              <div class="two-column">
+                <div class="panel-mini">
+                  <div class="timeline-panel-head">
+                    <h4>同源攻击链路分析</h4>
+                    <el-button size="small" @click="loadSourceChain">刷新链路</el-button>
+                  </div>
+                  <TransitionGroup
+                    v-if="sourceChain.timeline?.length"
+                    name="timeline-stagger"
+                    tag="div"
+                    class="animated-timeline"
+                  >
+                    <div
+                      v-for="item in sourceChain.timeline"
+                      :key="`${item.incident_no}-${item.time}`"
+                      class="timeline-node"
+                    >
+                      <div class="timeline-node-head">
+                        <strong>{{ item.attack_type }}</strong>
+                        <span>{{ item.time }}</span>
+                      </div>
+                      <p>{{ item.attack_stage }} · {{ item.target }}</p>
+                    </div>
+                  </TransitionGroup>
+                  <el-empty v-else description="暂无链路" />
+                </div>
+
+                <div class="panel-mini">
+                  <h4>误报反馈反哺训练</h4>
+                  <el-select v-model="feedback.feedback_type" class="full-width" placeholder="反馈类型">
+                    <el-option label="误报" value="误报" />
+                    <el-option label="漏报修正" value="漏报修正" />
+                    <el-option label="标签修正" value="标签修正" />
+                  </el-select>
+                  <el-input v-model="feedback.expected_label" class="top-gap" placeholder="期望标签" />
+                  <el-input v-model="feedback.comment" class="top-gap" type="textarea" :rows="3" placeholder="输入反馈" />
+                  <div class="action-row">
+                    <el-button type="danger" plain @click="submitFeedback">提交反馈</el-button>
+                  </div>
+                </div>
               </div>
+
+              <div class="recommendation-list">
+                <div v-for="(item, index) in activeIncident.recommendations || []" :key="`${index}-${item}`" class="recommendation-item">
+                  <span>{{ index + 1 }}</span>
+                  <p>{{ item }}</p>
+                </div>
+              </div>
+
+              <Transition name="ai-card-expand">
+                <div v-if="aiIncidentInsight" class="ai-analysis-card">
+                  <div class="ai-analysis-head">
+                    <strong>DeepSeek 事件研判</strong>
+                    <span>{{ aiIncidentInsight.provider }} / {{ aiIncidentInsight.model }} / {{ aiIncidentInsight.mode }}</span>
+                  </div>
+                  <p>{{ aiIncidentInsight.content }}</p>
+
+                  <div v-if="aiIncidentInsight.knowledge_hits?.length" class="ai-analysis-section">
+                    <h4>知识库依据</h4>
+                    <div class="insight-list compact-list">
+                      <div v-for="item in aiIncidentInsight.knowledge_hits" :key="item.id" class="insight-card">
+                        <div class="insight-card-top">
+                          <strong>{{ item.title }}</strong>
+                          <span>{{ item.category }} / {{ item.retrieval_method }} / {{ item.retrieval_engine }}</span>
+                        </div>
+                        <div class="rag-score-grid">
+                          <div>
+                            <span>融合分</span>
+                            <el-progress :percentage="toScorePercent(item.fusion_score)" :stroke-width="8" />
+                          </div>
+                          <div>
+                            <span>关键词</span>
+                            <el-progress :percentage="toScorePercent(item.keyword_score)" :stroke-width="8" color="#67c23a" />
+                          </div>
+                          <div>
+                            <span>向量</span>
+                            <el-progress :percentage="toScorePercent(item.vector_score)" :stroke-width="8" color="#e6a23c" />
+                          </div>
+                        </div>
+                        <div class="rag-meta-row">
+                          <el-tag size="small" type="danger">{{ item.severity }}</el-tag>
+                          <el-tag size="small" type="info">{{ item.attack_stage }}</el-tag>
+                          <el-tag v-for="term in item.matched_terms || []" :key="term" size="small">{{ term }}</el-tag>
+                        </div>
+                        <p>{{ item.content }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="aiIncidentInsight.strategy_plan?.length" class="ai-analysis-section">
+                    <h4>处置策略生成</h4>
+                    <div class="recommendation-list">
+                      <div v-for="(item, index) in aiIncidentInsight.strategy_plan" :key="`${item.step}-${index}`" class="recommendation-item">
+                        <span>{{ index + 1 }}</span>
+                        <p>{{ item.step }} / {{ item.owner }} / {{ item.action }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Transition>
+
+              <TransitionGroup name="timeline-stagger" tag="div" class="animated-timeline activity-timeline">
+                <div v-for="item in activeIncident.activities || []" :key="item.id" class="timeline-node">
+                  <div class="timeline-node-head">
+                    <strong>{{ item.action_type }}</strong>
+                    <span>{{ item.operator }}</span>
+                  </div>
+                  <p>{{ item.content }}</p>
+                  <p>{{ item.created_at }}</p>
+                </div>
+              </TransitionGroup>
             </div>
-
-            <Transition name="ai-card-expand">
-              <div v-if="aiIncidentInsight" class="ai-analysis-card">
-                <div class="ai-analysis-head">
-                  <strong>DeepSeek 事件研判</strong>
-                  <span>{{ aiIncidentInsight.provider }} / {{ aiIncidentInsight.model }} / {{ aiIncidentInsight.mode }}</span>
-                </div>
-                <p>{{ aiIncidentInsight.content }}</p>
-
-                <div v-if="aiIncidentInsight.knowledge_hits?.length" class="ai-analysis-section">
-                  <h4>知识库依据</h4>
-                  <div class="insight-list compact-list">
-                    <div v-for="item in aiIncidentInsight.knowledge_hits" :key="item.id" class="insight-card">
-                      <div class="insight-card-top">
-                        <strong>{{ item.title }}</strong>
-                        <span>{{ item.category }} / {{ item.retrieval_method }} / {{ item.retrieval_engine }}</span>
-                      </div>
-                      <div class="rag-score-grid">
-                        <div>
-                          <span>融合分</span>
-                          <el-progress :percentage="toScorePercent(item.fusion_score)" :stroke-width="8" />
-                        </div>
-                        <div>
-                          <span>关键词</span>
-                          <el-progress :percentage="toScorePercent(item.keyword_score)" :stroke-width="8" color="#67c23a" />
-                        </div>
-                        <div>
-                          <span>向量</span>
-                          <el-progress :percentage="toScorePercent(item.vector_score)" :stroke-width="8" color="#e6a23c" />
-                        </div>
-                      </div>
-                      <div class="rag-meta-row">
-                        <el-tag size="small" type="danger">{{ item.severity }}</el-tag>
-                        <el-tag size="small" type="info">{{ item.attack_stage }}</el-tag>
-                        <el-tag v-for="term in item.matched_terms || []" :key="term" size="small">{{ term }}</el-tag>
-                      </div>
-                      <p>{{ item.content }}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="aiIncidentInsight.strategy_plan?.length" class="ai-analysis-section">
-                  <h4>处置策略生成</h4>
-                  <div class="recommendation-list">
-                    <div v-for="(item, index) in aiIncidentInsight.strategy_plan" :key="`${item.step}-${index}`" class="recommendation-item">
-                      <span>{{ index + 1 }}</span>
-                      <p>{{ item.step }} / {{ item.owner }} / {{ item.action }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Transition>
-
-            <TransitionGroup name="timeline-stagger" tag="div" class="animated-timeline activity-timeline">
-              <div v-for="item in activeIncident.activities || []" :key="item.id" class="timeline-node">
-                <div class="timeline-node-head">
-                  <strong>{{ item.action_type }}</strong>
-                  <span>{{ item.operator }}</span>
-                </div>
-                <p>{{ item.content }}</p>
-                <p>{{ item.created_at }}</p>
-              </div>
-            </TransitionGroup>
           </div>
         </Transition>
       </PanelCard>

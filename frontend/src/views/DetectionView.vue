@@ -103,50 +103,11 @@
 
         <div class="command-flow-stage">
           <div class="command-flow-grid"></div>
-
-          <div class="command-flow-column command-flow-column-left">
-            <div v-for="item in flowSourceNodes" :key="item.id" class="command-flow-node command-flow-node-source">
-              <span>Source</span>
-              <strong>{{ item.name }}</strong>
-              <p>{{ item.meta }}</p>
-            </div>
-          </div>
-
-          <div class="command-flow-center">
-            <div
-              v-for="item in flowLinkItems"
-              :key="item.key"
-              class="command-link-line"
-              :class="item.levelClass"
-              :style="{ top: item.top }"
-            >
-              <div class="command-link-beam"></div>
-              <div class="command-link-label">
-                <span>{{ item.source }}</span>
-                <strong>{{ item.label }}</strong>
-                <p>{{ item.target }} / {{ item.service }}</p>
-              </div>
-            </div>
-
-            <div v-if="activeFlowRoute" class="command-center-core pulse-panel">
-              <span>当前焦点链路</span>
-              <strong>{{ activeFlowRoute.label }}</strong>
-              <p>{{ activeFlowRoute.attackStage }}</p>
-              <div class="command-center-core-route">
-                <span>{{ activeFlowRoute.source }}</span>
-                <strong>{{ activeFlowRoute.service }}</strong>
-                <span>{{ activeFlowRoute.target }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="command-flow-column command-flow-column-right">
-            <div v-for="item in flowTargetNodes" :key="item.id" class="command-flow-node command-flow-node-target">
-              <span>Target</span>
-              <strong>{{ item.name }}</strong>
-              <p>{{ item.meta }}</p>
-            </div>
-          </div>
+          <NetworkFlowChart
+            :items="streamItems"
+            :active-id="activeResult?.id"
+            style="position: relative; z-index: 2; grid-column: 1 / -1; height: 100%;"
+          />
         </div>
 
         <div class="command-summary-row">
@@ -345,6 +306,7 @@ import { useRouter } from 'vue-router'
 import { runDetection, simulateRealtimeStream } from '../api/dashboard'
 import CountUpValue from '../components/CountUpValue.vue'
 import InsightBarChart from '../components/InsightBarChart.vue'
+import NetworkFlowChart from '../components/NetworkFlowChart.vue'
 import PanelCard from '../components/PanelCard.vue'
 import SeverityTag from '../components/SeverityTag.vue'
 import { useAppStore } from '../stores/app'

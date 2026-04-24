@@ -1192,11 +1192,11 @@ a {
 
 .ai-analysis-card {
   padding: 18px;
-  border-radius: 22px;
-  border: 1px solid rgba(25, 118, 255, 0.2);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 212, 255, 0.22);
   background:
-    radial-gradient(circle at top right, rgba(25, 118, 255, 0.14), transparent 32%),
-    linear-gradient(135deg, rgba(250, 252, 255, 0.98), rgba(233, 242, 255, 0.92));
+    radial-gradient(circle at top right, rgba(0, 212, 255, 0.08), transparent 40%),
+    rgba(2, 12, 32, 0.92);
   box-shadow: var(--shadow-md);
 }
 
@@ -1322,6 +1322,11 @@ a {
 .chart-box {
   width: 100%;
   height: 300px;
+}
+
+.network-flow-chart {
+  width: 100%;
+  height: 280px;
 }
 
 .el-button {
@@ -1475,10 +1480,8 @@ a {
 }
 
 .ai-center-page {
-  width: min(1320px, 100%);
-  margin: 0 auto;
-  height: 100%;
-  min-height: calc(100vh - 28px);
+  width: 100%;
+  height: calc(100vh - 88px);
   overflow: hidden;
 }
 
@@ -1551,10 +1554,11 @@ a {
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
-  border-bottom: 1px solid var(--surface-border);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.15);
   background:
-    radial-gradient(circle at top right, rgba(25, 118, 255, 0.1), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(244, 249, 255, 0.92));
+    radial-gradient(circle at top right, rgba(0, 212, 255, 0.08), transparent 40%),
+    rgba(2, 10, 28, 0.95);
+  flex-shrink: 0;
 }
 
 .ai-command-title span,
@@ -1594,9 +1598,9 @@ a {
   height: 30px;
   padding: 0 12px;
   border-radius: 999px;
-  background: rgba(17, 40, 72, 0.06);
-  border: 1px solid rgba(112, 145, 186, 0.16);
-  color: var(--text-soft);
+  background: rgba(0, 212, 255, 0.06);
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  color: rgba(168, 200, 232, 0.85);
   font-size: 12px;
 }
 
@@ -1698,17 +1702,17 @@ a {
 .ai-assistant-block,
 .ai-inline-section {
   padding: 18px 20px;
-  border-radius: 18px;
-  border: 1px solid var(--surface-border);
-  background: rgba(255, 255, 255, 0.82);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  background: rgba(4, 18, 48, 0.72);
   box-shadow: var(--shadow-xs);
 }
 
 .ai-source-summary {
-  border-color: rgba(25, 118, 255, 0.16);
+  border-color: rgba(0, 212, 255, 0.22);
   background:
-    radial-gradient(circle at top right, rgba(25, 118, 255, 0.12), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 249, 255, 0.96));
+    radial-gradient(circle at top right, rgba(0, 212, 255, 0.08), transparent 40%),
+    rgba(2, 12, 32, 0.88);
 }
 
 .ai-source-summary p,
@@ -1721,7 +1725,8 @@ a {
 }
 
 .ai-assistant-loading {
-  border-color: rgba(25, 118, 255, 0.18);
+  border-color: rgba(0, 212, 255, 0.25);
+  background: rgba(0, 212, 255, 0.04);
 }
 
 .copilot-response-shell {
@@ -1738,10 +1743,10 @@ a {
 
 .ai-assistant-primary {
   min-height: 100%;
-  border-color: rgba(25, 118, 255, 0.18);
+  border-color: rgba(0, 212, 255, 0.22);
   background:
-    radial-gradient(circle at top right, rgba(25, 118, 255, 0.14), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 250, 255, 0.98));
+    radial-gradient(circle at top right, rgba(0, 212, 255, 0.08), transparent 40%),
+    rgba(2, 12, 32, 0.92);
 }
 
 .ai-empty-state {
@@ -1761,11 +1766,11 @@ a {
 
 .ai-console-composer {
   padding: 14px 18px 18px;
-  border-top: 1px solid var(--surface-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(247, 251, 255, 0.96));
+  border-top: 1px solid rgba(0, 212, 255, 0.15);
+  background: rgba(2, 10, 28, 0.95);
   display: grid;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .ai-composer-input .el-textarea__inner {
@@ -2012,6 +2017,7 @@ a {
   display: grid;
   grid-template-columns: 1.55fr 0.95fr;
   gap: 14px;
+  align-items: start;
 }
 
 .dashboard-command-page {
@@ -2348,15 +2354,45 @@ a {
   align-items: start;
 }
 
+/* Incident workbench: static controls on top, scrollable AI output below */
+.incident-workbench-card.panel-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.incident-workbench-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  flex: 1;
+}
+
+.incident-workbench-static {
+  display: grid;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.incident-workbench-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding-right: 4px;
+}
+
 .operation-focus-card {
-  border-color: rgba(25, 118, 255, 0.18);
+  border-color: rgba(0, 212, 255, 0.2);
   background:
-    radial-gradient(circle at top right, rgba(25, 118, 255, 0.12), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(244, 249, 255, 0.96));
+    radial-gradient(circle at top right, rgba(0, 212, 255, 0.08), transparent 40%),
+    rgba(4, 18, 48, 0.85);
 }
 
 .operation-bottom-grid {
-  align-items: start;
+  align-items: stretch;
 }
 
 .replay-stage-page {
@@ -3389,6 +3425,7 @@ body.sidebar-resizing {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr) 340px;
   gap: 16px;
+  align-items: start;
 }
 
 .command-side-column,
@@ -3587,10 +3624,14 @@ body.sidebar-resizing {
 
 .command-flow-stage {
   position: relative;
-  min-height: 430px;
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 220px;
-  gap: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  background:
+    radial-gradient(circle at center, rgba(36, 116, 255, 0.08), transparent 60%),
+    rgba(4, 14, 32, 0.85);
+  overflow: hidden;
+  padding: 8px;
+}
   padding: 18px;
   border-radius: 24px;
   border: 1px solid rgba(60, 119, 255, 0.18);
