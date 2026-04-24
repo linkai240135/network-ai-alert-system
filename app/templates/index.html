@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>通信网络异常检测与智能告警系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  </head>
+  <body>
+    <div id="app" class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Vue + Flask + MySQL Competition Edition</p>
+          <h1>通信网络异常检测与智能告警系统</h1>
+          <p class="hero-copy">
+            面向校园网、企业内网与实验室通信环境的网络安全平台，支持样本管理、模型训练、在线检测、日志留存和风险告警。
+          </p>
+          <div class="hero-tags">
+            <span>[[ systemInfo.architecture.frontend ]]</span>
+            <span>[[ systemInfo.architecture.backend ]]</span>
+            <span>[[ overview.db_mode ]] 持久化</span>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-row">
+            <span>当前数据库</span>
+            <strong>[[ overview.db_mode ]] / [[ dbLabel ]]</strong>
+          </div>
+          <div class="hero-card-row">
+            <span>最近训练时间</span>
+            <strong>[[ overview.training_created_at || '首次启动后自动生成' ]]</strong>
+          </div>
+          <div class="hero-card-row">
+            <span>最佳模型</span>
+            <strong>[[ overview.training.best_model || '--' ]]</strong>
+          </div>
+          <button class="primary-btn" :disabled="loading.train" @click="retrainModel">
+            [[ loading.train ? '训练中...' : '重新训练模型' ]]
+          </button>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <p>样本总量</p>
+          <strong>[[ overview.records || 0 ]]</strong>
+          <p>支持流量字段和标签持久化存储</p>
+        </article>
+        <article class="stat-card">
+          <p>特征维度</p>
+          <strong>[[ overview.features || 0 ]]</strong>
+          <p>覆盖时长、速率、端口熵、负载等关键指标</p>
+        </article>
+        <article class="stat-card">
+          <p>告警总数</p>
+          <strong>[[ alerts.length ]]</strong>
+          <p>异常流量识别后自动生成高危告警</p>
+        </article>
+        <article class="stat-card">
+          <p>检测日志</p>
+          <strong>[[ detections.length ]]</strong>
+          <p>数据库保留最近识别记录，支持答辩展示</p>
+        </article>
+      </section>
+
+      <nav class="tab-bar">
+        <button v-for="item in tabs" :key="item.key" :class="{ active: activeTab === item.key }" @click="activeTab = item.key">
+          [[ item.label ]]
+        </button>
+      </nav>
+
+      <section v-if="activeTab === 'dashboard'" class="tab-content">
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>模型效果对比</h2>
+                <span>多模型训练结果自动入库</span>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>模型</th>
+                    <th>Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="metric in overview.models || []" :key="metric.name">
+                    <td>[[ metric.name ]]</td>
+                    <td>[[ metric.accuracy ]]</td>
+                    <td>[[ metric.precision ]]</td>
+                    <td>[[ metric.recall ]]</td>
+                    <td>[[ metric.f1_score ]]</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>攻击分布图</h2>
+                <span>训练样本按攻击类型统计</span>
+              </div>
+            </div>
+            <div id="class-chart" class="chart"></div>
+          </section>
+        </div>
+
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>系统架构</h2>
+                <span>升级后的比赛成品技术栈</span>
+              </div>
+            </div>
+            <div class="architecture">
+              <div class="arch-card" v-for="(value, key) in systemInfo.architecture" :key="key">
+                <p>[[ key ]]</p>
+                <strong>[[ value ]]</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>样本预览</h2>
+                <span>用于展示数据格式与字段组成</span>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th v-for="column in previewColumns" :key="column">[[ column ]]</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, idx) in overview.preview || []" :key="idx">
+                    <td v-for="column in previewColumns" :key="column">[[ formatCell(row[column]) ]]</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section v-if="activeTab === 'detect'" class="tab-content">
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>在线异常检测</h2>
+                <span>提交网络流量特征并生成识别结论</span>
+              </div>
+            </div>
+            <form class="detect-form" @submit.prevent="submitDetection">
+              <label v-for="feature in featureColumns" :key="feature">
+                <span>[[ feature ]]</span>
+                <input v-model.number="detectForm[feature]" type="number" step="0.0001" required />
+              </label>
+              <button class="primary-btn" type="submit" :disabled="loading.detect">
+                [[ loading.detect ? '检测中...' : '开始检测' ]]
+              </button>
+              <button class="ghost-btn" type="button" @click="fillAttackSample">填充攻击样例</button>
+              <button class="ghost-btn" type="button" @click="fillBenignSample">填充正常样例</button>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>检测结果</h2>
+                <span>同时写入检测日志和告警中心</span>
+              </div>
+            </div>
+            <div :class="['result-card', resultClass]">
+              <template v-if="result">
+                <div class="result-title">
+                  <div>
+                    <h3>[[ result.label ]]</h3>
+                    <p class="result-meta">[[ result.description ]]</p>
+                  </div>
+                  <span :class="['badge', badgeClass]">[[ result.risk_level ]]风险</span>
+                </div>
+                <p><strong>置信度：</strong>[[ (result.confidence * 100).toFixed(2) ]]%</p>
+                <p><strong>检测时间：</strong>[[ result.created_at ]]</p>
+                <p><strong>处置建议：</strong>[[ result.advice ]]</p>
+                <p><strong>联动结果：</strong>[[ latestAlert ? '已生成告警并写入数据库。' : '当前判定为正常流量，仅保留检测日志。' ]]</p>
+              </template>
+              <template v-else>
+                <p>等待检测结果...</p>
+              </template>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section v-if="activeTab === 'alerts'" class="tab-content">
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>告警中心</h2>
+                <span>数据库持久化的异常事件</span>
+              </div>
+            </div>
+            <div class="alerts-list">
+              <article class="alert-item" v-for="item in alerts" :key="item.id">
+                <div class="result-title">
+                  <strong>[[ item.title ]]</strong>
+                  <span :class="['badge', badgeClassByLevel(item.risk_level)]">[[ item.risk_level ]]风险</span>
+                </div>
+                <p>时间：[[ item.created_at ]]</p>
+                <p>状态：[[ item.status ]] | 置信度：[[ (item.confidence * 100).toFixed(2) ]]%</p>
+                <p>建议：[[ item.advice ]]</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>检测日志</h2>
+                <span>最近识别记录，适合答辩过程演示</span>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>类型</th>
+                    <th>风险</th>
+                    <th>置信度</th>
+                    <th>时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in detections" :key="item.id">
+                    <td>[[ item.id ]]</td>
+                    <td>[[ item.label ]]</td>
+                    <td>[[ item.risk_level ]]</td>
+                    <td>[[ (item.confidence * 100).toFixed(2) ]]%</td>
+                    <td>[[ item.created_at ]]</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.APP_CONFIG = {
+        featureColumns: {{ feature_columns|tojson }}
+      };
+    </script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>
