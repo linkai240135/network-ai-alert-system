@@ -1,201 +1,76 @@
 <template>
-  <div class="layout-shell" :style="layoutStyle" :class="{ 'layout-shell-compact': isCompactViewport }">
-    <aside class="sidebar" :class="{ 'sidebar-collapsed': isCollapsed }">
-      <button
-        class="sidebar-toggle"
-        type="button"
-        :title="isCollapsed ? '展开菜单栏' : '收起菜单栏'"
-        @click="toggleSidebar"
-      >
-        {{ isCollapsed ? '>' : '<' }}
-      </button>
-
-      <div class="brand-panel">
-        <div class="brand-block" :class="{ 'brand-block-collapsed': isCollapsed }">
-          <div class="brand-logo">AI</div>
-          <div v-if="!isCollapsed" class="brand-copy">
-            <h1 style="font-size:15px;letter-spacing:0.06em;color:#00d4ff;text-shadow:0 0 12px rgba(0,212,255,0.6);margin:0">网络异常检测平台</h1>
-            <p style="font-size:11px;color:rgba(0,212,255,0.45);letter-spacing:0.12em;text-transform:uppercase;margin:6px 0 0">Network AI Alert System</p>
-          </div>
+  <div class="layout-shell">
+    <nav class="topnav">
+      <div class="topnav-logo">
+        <div class="topnav-logo-icon">AI</div>
+        <div class="topnav-logo-text">
+          <span class="topnav-logo-name">网络异常检测平台</span>
+          <span class="topnav-logo-sub">NETWORK AI ALERT</span>
         </div>
       </div>
 
-      <el-menu :default-active="route.path" router class="sidebar-menu" :collapse="isCollapsed">
-        <el-menu-item v-for="item in menuItems" :key="item.index" :index="item.index">
+      <div class="topnav-menu">
+        <router-link
+          v-for="item in menuItems"
+          :key="item.path"
+          :to="item.path"
+          class="topnav-item"
+          :class="{ 'topnav-item-active': isActive(item.path) }"
+        >
           <el-icon><component :is="item.icon" /></el-icon>
           <span>{{ item.label }}</span>
-        </el-menu-item>
-      </el-menu>
-    </aside>
+        </router-link>
+      </div>
 
-    <div
-      v-if="!isCompactViewport"
-      class="sidebar-resizer"
-      :class="{ dragging: isDragging }"
-      title="拖拽调整菜单栏宽度"
-      @mousedown="startResize"
-    >
-      <span></span>
-    </div>
+      <div class="topnav-actions">
+        <span class="topnav-status">
+          <span class="topnav-status-dot"></span>
+          在线
+        </span>
+        <span class="topnav-user">管理员</span>
+        <el-button size="small" type="danger" plain @click="handleLogout">退出</el-button>
+      </div>
+    </nav>
 
-    <main class="main-panel" :class="{ 'main-panel-fixed': !showTopbar }">
-      <header v-if="showTopbar" class="topbar">
-        <div class="topbar-title">
-          <div class="topbar-breadcrumb">控制台 / {{ route.meta.title }}</div>
-          <h2>{{ route.meta.title }}</h2>
-        </div>
-
-        <div class="topbar-tags">
-          <span class="status-chip accent-chip">
-            <span style="width:6px;height:6px;border-radius:50%;background:#00e676;box-shadow:0 0 6px rgba(0,230,118,0.8);display:inline-block"></span>
-            系统在线
-          </span>
-          <span class="status-chip user-chip">管理员</span>
-          <el-button size="small" type="danger" plain @click="handleLogout">退出</el-button>
-        </div>
-      </header>
-
-      <section
-        class="workspace-shell"
-        :class="{
-          'workspace-shell-expanded': !showTopbar,
-          'workspace-shell-fixed': !showTopbar,
-        }"
-      >
-        <RouterView />
-      </section>
+    <main class="main-panel">
+      <RouterView />
     </main>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
 import { useThemeStore } from '../stores/theme'
-
-const SIDEBAR_WIDTH_KEY = 'network-ai-sidebar-width'
-const SIDEBAR_COLLAPSED_KEY = 'network-ai-sidebar-collapsed'
-const SIDEBAR_MIN_WIDTH = 220
-const SIDEBAR_MAX_WIDTH = 420
-const SIDEBAR_COLLAPSED_WIDTH = 96
-const COMPACT_BREAKPOINT = 1180
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
 
-const sidebarWidth = ref(308)
-const isCollapsed = ref(false)
-const isDragging = ref(false)
-const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
-
 const menuItems = [
-  { index: '/dashboard', label: '安全运营大屏', icon: 'DataAnalysis' },
-  { index: '/ai-center', label: 'AI 研判中心', icon: 'Opportunity' },
-  { index: '/datasets', label: '数据集管理', icon: 'Files' },
-  { index: '/training', label: '模型训练中心', icon: 'TrendCharts' },
-  { index: '/detection', label: '在线检测', icon: 'Promotion' },
-  { index: '/batch-detection', label: 'CSV 批量检测', icon: 'UploadFilled' },
-  { index: '/alerts', label: '告警中心', icon: 'Bell' },
-  { index: '/incidents', label: '事件处置中心', icon: 'Management' },
-  { index: '/assets', label: '资产画像中心', icon: 'Monitor' },
-  { index: '/settings', label: '系统设置', icon: 'Setting' },
+  { path: '/dashboard', label: '大屏', icon: 'DataAnalysis' },
+  { path: '/ai-center', label: 'AI研判', icon: 'Opportunity' },
+  { path: '/datasets', label: '数据集', icon: 'Files' },
+  { path: '/training', label: '训练', icon: 'TrendCharts' },
+  { path: '/detection', label: '检测', icon: 'Promotion' },
+  { path: '/batch-detection', label: '批量', icon: 'UploadFilled' },
+  { path: '/alerts', label: '告警', icon: 'Bell' },
+  { path: '/incidents', label: '事件', icon: 'Management' },
+  { path: '/assets', label: '资产', icon: 'Monitor' },
+  { path: '/settings', label: '设置', icon: 'Setting' },
 ]
 
-const isDark = computed({
-  get: () => themeStore.mode === 'dark',
-  set: (value) => themeStore.apply(value ? 'dark' : 'light'),
-})
-
-const isCompactViewport = computed(() => viewportWidth.value <= COMPACT_BREAKPOINT)
-const showTopbar = computed(() => !route.meta?.hideTopbar)
-
-const effectiveSidebarWidth = computed(() => {
-  if (isCompactViewport.value) return 0
-  return isCollapsed.value ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth.value
-})
-
-const layoutStyle = computed(() => {
-  if (isCompactViewport.value) return {}
-  return {
-    gridTemplateColumns: `${effectiveSidebarWidth.value}px 14px minmax(0, 1fr)`,
-  }
-})
-
-const clampSidebarWidth = (value) => Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, value))
-
-const persistSidebarState = () => {
-  localStorage.setItem(SIDEBAR_WIDTH_KEY, String(sidebarWidth.value))
-  localStorage.setItem(SIDEBAR_COLLAPSED_KEY, isCollapsed.value ? '1' : '0')
-}
-
-const toggleSidebar = () => {
-  if (isCompactViewport.value) return
-  isCollapsed.value = !isCollapsed.value
-  persistSidebarState()
-}
-
-const stopResize = () => {
-  isDragging.value = false
-  window.removeEventListener('mousemove', handleResize)
-  window.removeEventListener('mouseup', stopResize)
-  document.body.classList.remove('sidebar-resizing')
-  persistSidebarState()
-}
-
-const handleResize = (event) => {
-  if (!isDragging.value) return
-  const nextWidth = clampSidebarWidth(event.clientX - 18)
-  sidebarWidth.value = nextWidth
-  if (isCollapsed.value && nextWidth > SIDEBAR_COLLAPSED_WIDTH + 24) {
-    isCollapsed.value = false
-  }
-}
-
-const startResize = () => {
-  if (isCompactViewport.value) return
-  isDragging.value = true
-  isCollapsed.value = false
-  document.body.classList.add('sidebar-resizing')
-  window.addEventListener('mousemove', handleResize)
-  window.addEventListener('mouseup', stopResize)
-}
-
-const handleViewportResize = () => {
-  viewportWidth.value = window.innerWidth
-}
+const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
 
 const handleLogout = async () => {
   await authStore.logout()
   router.push('/login')
 }
 
-const handleThemeChange = (value) => {
-  themeStore.apply(value ? 'dark' : 'light')
-}
-
 onMounted(() => {
-  // 强制暗色主题
   themeStore.apply('dark')
-
-  const cachedWidth = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY) || '')
-  const cachedCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY)
-
-  if (Number.isFinite(cachedWidth) && cachedWidth > 0) {
-    sidebarWidth.value = clampSidebarWidth(cachedWidth)
-  }
-  if (cachedCollapsed === '1') {
-    isCollapsed.value = true
-  }
-
-  window.addEventListener('resize', handleViewportResize)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleViewportResize)
-  stopResize()
 })
 </script>
